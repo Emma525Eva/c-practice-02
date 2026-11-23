@@ -513,3 +513,175 @@ optind == argc
 ```
 
 说明已经没有剩余参数了。也就是说，用户没有提供路径。
+
+#### 13.list_path(".", &options);
+
+```c
+if(optind==argc)
+      list_path(".",&options);
+```
+
+表示：**如果用户没有指定路径，就默认读取当前目录。**
+
+```c
+"."
+```
+
+**这是一个字符串，表示当前工作目录。**
+
+Linux 中常见的路径符号：
+
+| 符号 | 含义                              |
+| ---- | --------------------------------- |
+| `.`  | 当前目录                          |
+| `..` | 上一级目录                        |
+| `/`  | 根目录                            |
+| `~`  | 当前用户的家目录（由 Shell 展开） |
+
+#### 14.功能测试宏（Feature Test Macros）
+
+添加的是：
+
+```c
+#define _DEFAULT_SOURCE
+#define _POSIX_C_SOURCE 200809L
+```
+
+它们都叫作**功能测试宏（Feature Test Macros）**。
+
+在程序中使用了：
+
+```c
+#include <unistd.h>
+```
+
+然后调用：
+
+```c
+getopt(argc, argv, "alRtris");
+```
+
+以及：
+
+```c
+if (optind == argc)
+```
+
+这里有一个问题：
+
+`unistd.h` 并不是把所有系统接口无条件地提供给程序。
+
+在 Linux 中，系统头文件会根据你设置的功能测试宏，决定向程序暴露哪些接口声明。
+
+例如：
+
+```c
+#define _POSIX_C_SOURCE 200809L
+#include <unistd.h>
+```
+
+相当于告诉系统：
+
+> 我的程序希望使用 POSIX.1-2008 标准规定的接口。
+
+如果没有设置合适的宏，某些接口的声明可能不会出现在头文件中。
+
+这样编译器就可能出现：
+
+```
+error: implicit declaration of function ‘getopt’
+error: ‘optind’ undeclared
+```
+
+注意：这不是说 `getopt()` 不存在，而是编译器没有看到它的声明。
+
+1.
+
+```
+#define _POSIX_C_SOURCE 200809L
+```
+
+它的作用是：**指定程序希望使用哪个版本的 POSIX 标准接口。**
+
+POSIX 是一套操作系统接口标准。
+
+它规定了很多常用的系统功能，例如：
+
+- 文件操作
+- 进程管理
+- 目录操作
+- 输入输出
+- 命令行参数处理
+
+Linux 提供了大量 POSIX 接口。
+
+例如：
+
+```c
+#include <unistd.h>
+```
+
+其中就有一些 POSIX 接口：
+
+```c
+read();
+write();
+close();
+```
+
+**为什么是** `200809L`**？**
+
+它代表 POSIX.1-2008 对应的标准版本。
+
+常见值：
+
+| 宏值      | 对应标准      |
+| --------- | ------------- |
+| `199309L` | POSIX.1b-1993 |
+| `199506L` | POSIX.1c-1995 |
+| `200112L` | POSIX.1-2001  |
+| `200809L` | POSIX.1-2008  |
+
+这里的 `L` 表示整数常量使用 `long int` 类型。
+
+可以把：
+
+```
+#define _POSIX_C_SOURCE 200809L
+```
+
+理解为：请按照 POSIX.1-2008 的接口标准，向我的程序提供相应的声明。
+
+2.
+
+```c
+#define _DEFAULT_SOURCE
+```
+
+它的作用是：**启用 glibc 提供的默认扩展接口。**
+
+glibc 是 GNU C Library，也就是 GNU C 标准库实现。
+
+Ubuntu 上的 GCC 通常使用 glibc 提供的 C 库和系统头文件。
+
+glibc 除了提供标准 C 和 POSIX 接口，还提供一些 GNU/Linux 环境下常用的扩展接口。
+
+例如：
+
+```c
+strdup();
+```
+
+`strdup()` 是 POSIX 接口，同时也被 glibc 提供。
+
+再比如：
+
+```c
+getline();
+```
+
+它也由 glibc 提供，并属于 POSIX.1-2008。
+
+`_DEFAULT_SOURCE` 主要用于启用 glibc 的默认接口集合。
+
+可以理解为：除了标准规定的接口，我还希望使用 glibc 默认提供的一些扩展接口。
